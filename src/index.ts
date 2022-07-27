@@ -1,29 +1,17 @@
+import { getUrl } from './get-url';
+
 export default {
   async fetch(
     request: Request,
     env,
     ctx: ExecutionContext
   ): Promise<Response> {
-    const statusCode = 301;
-    let destinationURL = 'https://act.vot-er.org/';
+    const requestUrl = new URL(request.url);
+    const code = requestUrl.pathname.replace('/', '');
+		const searchParams = requestUrl.searchParams
 
-    const url = new URL(request.url);
-    const { pathname, searchParams } = url;
+    const destinationUrl = await getUrl(code, searchParams);
 
-    const code = pathname.replace('/', '');
-    if (code) {
-      const response = await fetch('https://dashboard.vot-er.org/api/redirects/' + code);
-      const json = await response.json();
-      const { organizationId, customUrl } = json;
-
-      searchParams.set('organizationId', organizationId);
-      searchParams.set('ref', code);
-      if (customUrl) { destinationURL = customUrl; }
-    }
-
-    return Response.redirect(
-      destinationURL + '?' + searchParams.toString(),
-      statusCode
-    );
+    return Response.redirect(destinationUrl, 301);
   },
 };
